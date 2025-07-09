@@ -1,11 +1,17 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { LogsModule } from './logs/logs.module';
+import { ConfigModule } from '@nestjs/config';
+import { LessonsModule } from './lessons/lessons.module';
 
 @Module({
   imports: [
-    MongooseModule.forRoot('mongodb://localhost:27017/physfun'),
-    LogsModule,
+    ConfigModule.forRoot(),
+    MongooseModule.forRoot(process.env.MONGO_URI!),
+    LessonsModule,
   ],
 })
-export class AppModule {}
+export class AppModule {
+  constructor() {
+    console.log('Mongo URI:', process.env.MONGO_URI);
+  }
+}

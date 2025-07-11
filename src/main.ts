@@ -10,5 +10,6 @@ async function bootstrap() {
   app.enableCors();  // <-- ใส่ตรงนี้
 
   await app.listen(process.env.PORT ?? 3001);
+  console.log("server running on port", process.env.PORT ?? 3001)
 }
 bootstrap();

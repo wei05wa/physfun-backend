@@ -7,14 +7,11 @@ import { User, UserSchema } from 'src/users/user.schema';
 @Schema({id: false, timestamps : true })
 export class Message{
 
-    @Prop({ type: UserSchema, ref: 'User'})
-  userId: User;
-
   @Prop({required : true})
   content : string;
 
 
-    @Prop({required : true})
+    @Prop({required : true, default : 'user' , type : String,enum : ['user', 'ai']})
   sender : string;
 
   CreatedAt? : Date;
@@ -33,13 +30,11 @@ export class ChatSession {
  @Prop({unique:true,required:true})
   sessionId: string;
 
-  @Prop({ type: UserSchema, ref: 'User', required:true})
+  @Prop({ type : UserSchema, ref : 'User', required : true})
   userId: User;
 
   @Prop({ type: [MessageChatSchema], default : []})
   messages: Message[];
-
-
 
 }
 

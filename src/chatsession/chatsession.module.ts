@@ -1,13 +1,15 @@
 import { Module } from '@nestjs/common';
-import { ChatmodelService } from './chatsession.service';
-import { ChatmodelController } from './chatsession.controller';
+import { MongooseModule } from '@nestjs/mongoose';
+import  { ChatSessionSchema, ChatSession } from './chatsession.schema';
+import { ChatSessionService } from './chatsession.service';
+import { ChatSessionController } from './chatsession.controller';
 import { ConfigModule} from '@nestjs/config';
 
 @Module({
 imports:[
  ConfigModule
 ],
-  providers: [ChatmodelService],
-  controllers: [ChatmodelController],
+  providers: [ChatSessionService],
+  controllers: [ChatSessionController],
 })
 export class ChatsessionModule {}

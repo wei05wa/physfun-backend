@@ -5,13 +5,24 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
-  async create(@Body() body: { username: string; password: string; email?: string }) {
-    return this.usersService.create(body.username, body.password, body.email);
+  @Post('register')
+  async createUser(@Body() body: { username: string; password: string; email: string; role: string}) {
+    return this.usersService.createUser(body.username, body.password, body.email, body.role);
+  }
+
+ @Get()
+  async findAllUser() {
+    return this.usersService.findAllUser();
   }
 
   @Get(':username')
   async findByUsername(@Param('username') username: string) {
     return this.usersService.findByUsername(username);
   }
+
+  @Post('login')
+  async LoginUser(@Body() body: { username : string; password: string; role: string}) {
+    return this.usersService.LoginUser(body.username, body.password, body.role);
+  }
+
 }

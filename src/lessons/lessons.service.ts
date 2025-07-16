@@ -37,16 +37,19 @@ export class LessonsService {
   async getLessonSummaries(): Promise<
     { lessonId: string; title: string; image?: string }[]
   > {
-    return this.lessonModel.find({}, { lessonId: 1, title: 1, image: 1, _id: 0 });
+    return this.lessonModel.find({}, { lessonId: 1, title: 1, image: 1, type:1, _id: 0 });
   }
 
   async updateLessonByLessonId(
     lessonId: string,
     updateData: Partial<Lesson>,
   ): Promise<Lesson> {
+    // 🔥 ลบ lessonId ออกจาก updateData เพื่อป้องกัน error
+    const { lessonId: _, ...rest } = updateData;
+
     const updated = await this.lessonModel.findOneAndUpdate(
       { lessonId },
-      updateData,
+      rest,
       { new: true },
     );
 
@@ -56,6 +59,21 @@ export class LessonsService {
 
     return updated;
   }
+
+  async bulkUpdateTypes(updates: { lessonId: string; type: string }[]) {
+    const results: { lessonId: string; updated: boolean }[] = [];
+
+    for (const update of updates) {
+      const res = await this.lessonModel.updateOne(
+        { lessonId: update.lessonId },
+        { $set: { type: update.type } }
+      );
+      results.push({ lessonId: update.lessonId, updated: res.modifiedCount > 0 });
+    }
+
+    return results;
+  }
 }
+
 
 

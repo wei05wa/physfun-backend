@@ -11,6 +11,9 @@ export class SubLesson {
   @Prop()
   description?: string;
 
+  @Prop({ default: 'content' }) // 'content' หรือ 'simulation'
+  type: string;
+
   // สามารถเพิ่ม field อื่น ๆ ได้ เช่น video, image, quiz ฯลฯ
 }
 
@@ -33,6 +36,9 @@ export class Lesson {
 
   @Prop({ type: [SubLesson], default: [] })
   subLessons: SubLesson[]; // รายการบทเรียนย่อย
+
+  @Prop({ default: 'content' }) // 👉 default เป็น content ถ้าไม่ระบุ
+  type: string;
 }
 
 export const SubLessonSchema = SchemaFactory.createForClass(SubLesson);

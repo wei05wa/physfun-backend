@@ -2,12 +2,14 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
 import { LessonsModule } from './lessons/lessons.module';
+import { SmartCheckModule } from './smart-check/smart-check.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
     MongooseModule.forRoot(process.env.MONGO_URI!),
     LessonsModule,
+    SmartCheckModule,
   ],
 })
 export class AppModule {

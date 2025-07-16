@@ -36,6 +36,15 @@ export class LessonsController {
     return this.lessonsService.getLessonSummaries();
   }
 
+  // เอา route พิเศษไว้ก่อนนะ
+  @Put('bulk-update-type')
+  async bulkUpdateLessonTypes(
+    @Body() updates: { lessonId: string; type: string }[],
+  ) {
+    return this.lessonsService.bulkUpdateTypes(updates);
+  }
+
+  // route แบบ dynamic ต้องประกาศหลังสุด
   @Put(':lessonId')
   async update(
     @Param('lessonId') lessonId: string,

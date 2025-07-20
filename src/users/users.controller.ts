@@ -10,14 +10,14 @@ export class UsersController {
     return this.usersService.createUser(body.username, body.password, body.email, body.role);
   }
 
- @Get()
+   @Get()
   async findAllUser() {
     return this.usersService.findAllUser();
   }
 
   @Get(':username')
   async findByUsername(@Param('username') username: string) {
-    return this.usersService.findByUsername(username);
+    return this.usersService.GetmeByUsername(username);
   }
 
   @Post('login')

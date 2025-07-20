@@ -11,6 +11,9 @@ import { SmartCheckModule } from './smart-check/smart-check.module';
     ConfigModule.forRoot(),
     MongooseModule.forRoot(process.env.MONGO_URI!),
     LessonsModule,
+    UsersModule,
+    ChatmodelModule,
+    SmartCheckModule
   ],
 })
 

@@ -4,7 +4,7 @@ import { Model } from 'mongoose';
 import { User, UserDocument } from './user.schema';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { access } from 'fs';
+
 
 @Injectable()
 export class UsersService {
@@ -21,11 +21,7 @@ export class UsersService {
     resetPasswordToken?: string,
     resetPasswordExpire?: Date,
   ): Promise<any> {
-    const saltround = 10;
-
-    //hash password
-    const hashedpassword = await bcrypt.hash(password, saltround);
-
+ 
 if(!username || !password || !email || !role){
   return {
     success : false,
@@ -34,16 +30,41 @@ if(!username || !password || !email || !role){
   }
 }
 
+try{
+
+  //  const saltround = 10;
+
+  //   //hash password
+  //   const hashedpassword = await bcrypt.hash(password, saltround);
+
+
     const user = new this.userModel({
       username,
-      password : hashedpassword,
+      password,
       email,
       role,
       resetPasswordToken,
       resetPasswordExpire,
     });
 
-    return user.save();
+const savedUser = await user.save();
+     return {
+      success: true,
+      message: "User created successfully",
+      data: savedUser
+    };
+
+  }catch(err){
+   console.error('User creation error:', err);
+    return {
+      success: false,
+      message: "Failed to create user",
+      data: null
+    };
+
+  }
+
+    
   }
 
   async LoginUser(
@@ -70,22 +91,27 @@ if(!name || !password){
     const user = (await this.userModel
       .findOne(query)
       .select('+password')
-      .exec()) as any;
+      .exec());
 
     if (!user) {
       return {
         success: false,
-        message: 'Invalid Credential.',
+        message: 'Invalid Credential. (us)',
         data: null,
       };
     }
 
+console.log(password);
+console.log(user.password);
+    
     const isMatch = await bcrypt.compare(password, user.password);
+  
+console.log(isMatch);
 
     if (!isMatch) {
       return {
         success: false,
-        message: 'Invalid Credential',
+        message: 'Invalid Credential. (sm)',
         data: null,
       };
     }
@@ -116,11 +142,15 @@ if(!name || !password){
     };
   }
 
-  async findByUsername(username: string): Promise<User | null> {
+  async GetmeByUsername(username: string): Promise<User | null> {
     return this.userModel.findOne({ username });
   }
+
+ 
 
   async findAllUser(): Promise<User[]> {
     return this.userModel.find().exec();
   }
+
 }
+

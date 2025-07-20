@@ -15,7 +15,7 @@ export class User {
     ],})
   email : string;
 
-  @Prop({ required: true })
+  @Prop({ type : String, required: true, select : false })
   password: string;
 
   @Prop({ required: true, default: 'user',type : String , enum: ['user', 'admin'] })
@@ -43,7 +43,7 @@ UserSchema.pre<UserDocument>('save',async function(next){
 
   //Generate salt and hash passwaord
 
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-  next();
+   const salt = await bcrypt.genSalt(10);
+   this.password = await bcrypt.hash(this.password, salt);
+   next();
 })

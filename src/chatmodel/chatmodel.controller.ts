@@ -5,6 +5,19 @@ import { ChatmodelService } from './chatmodel.service';
 export class ChatmodelController {
   constructor(private readonly  ChatModelService : ChatmodelService) {}
 
+//Phyrai AI
+ @Post()
+  async PhyraichatMessage(@Body() body: { prompt: string; }) {
+    const airesponse =  await this.ChatModelService.Phyraimodel(body.prompt);
+    console.log("type of response" , typeof airesponse);
+    return {
+      content : airesponse,
+      role : "assistant"
+    }
+  
+  }
+
+
   //Basic AI
   @Post('basic')
   async createBasicMessage(@Body() body: { prompt: string; }) {

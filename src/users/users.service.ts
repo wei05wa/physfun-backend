@@ -5,7 +5,6 @@ import { User, UserDocument } from './user.schema';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 
-
 @Injectable()
 export class UsersService {
   constructor(
@@ -21,50 +20,43 @@ export class UsersService {
     resetPasswordToken?: string,
     resetPasswordExpire?: Date,
   ): Promise<any> {
- 
-if(!username || !password || !email || !role){
-  return {
-    success : false,
-    message : "All field is required.",
-    data : null
-  }
-}
+    if (!username || !password || !email || !role) {
+      return {
+        success: false,
+        message: 'All field is required.',
+        data: null,
+      };
+    }
 
-try{
+    try {
+      //  const saltround = 10;
 
-  //  const saltround = 10;
+      //   //hash password
+      //   const hashedpassword = await bcrypt.hash(password, saltround);
 
-  //   //hash password
-  //   const hashedpassword = await bcrypt.hash(password, saltround);
+      const user = new this.userModel({
+        username,
+        password,
+        email,
+        role,
+        resetPasswordToken,
+        resetPasswordExpire,
+      });
 
-
-    const user = new this.userModel({
-      username,
-      password,
-      email,
-      role,
-      resetPasswordToken,
-      resetPasswordExpire,
-    });
-
-const savedUser = await user.save();
-     return {
-      success: true,
-      message: "User created successfully",
-      data: savedUser
-    };
-
-  }catch(err){
-   console.error('User creation error:', err);
-    return {
-      success: false,
-      message: "Failed to create user",
-      data: null
-    };
-
-  }
-
-    
+      const savedUser = await user.save();
+      return {
+        success: true,
+        message: 'User created successfully',
+        data: savedUser,
+      };
+    } catch (err) {
+      console.error('User creation error:', err);
+      return {
+        success: false,
+        message: 'Failed to create user',
+        data: null,
+      };
+    }
   }
 
   async LoginUser(
@@ -73,25 +65,19 @@ const savedUser = await user.save();
     resetPasswordToken?: string,
     resetPasswordExpire?: Date,
   ): Promise<any> {
-
-if(!name || !password){
-  return {
-    success : false,
-    message : "All field is required.",
-    data : null
-  }
-}
+    if (!name || !password) {
+      return {
+        success: false,
+        message: 'All field is required.',
+        data: null,
+      };
+    }
 
     const query: any = {
       username: name,
     };
 
-
-
-    const user = (await this.userModel
-      .findOne(query)
-      .select('+password')
-      .exec());
+    const user = await this.userModel.findOne(query).select('+password').exec();
 
     if (!user) {
       return {
@@ -101,17 +87,17 @@ if(!name || !password){
       };
     }
 
-console.log(password);
-console.log(user.password);
-    
+    // console.log(password);
+    // console.log(user.password);
+
     const isMatch = await bcrypt.compare(password, user.password);
-  
-console.log(isMatch);
+
+    // console.log(isMatch);
 
     if (!isMatch) {
       return {
         success: false,
-        message: 'Invalid Credential. (sm)',
+        message: 'Invalid Credential.',
         data: null,
       };
     }
@@ -125,7 +111,7 @@ console.log(isMatch);
     };
 
     //Generate JWT Token
-    const token = this.jwtService.sign(payload);
+    const token = await this.jwtService.signAsync(payload);
 
     //Remove password from password
     const { password: userPassword, ...userWithoutPassword } = user.toObject();
@@ -133,11 +119,11 @@ console.log(isMatch);
     return {
       success: true,
       message: 'Login successfully',
+      token: token, //JWT Token
+      token_type: 'Bearer',
+      token_expires_in: 3600, //1 hour
       data: {
         user: userWithoutPassword,
-        token: token, //JWT Token
-        token_type: 'Bearer',
-        token_expires_in: 3600, //1 hour
       },
     };
   }
@@ -146,11 +132,11 @@ console.log(isMatch);
     return this.userModel.findOne({ username });
   }
 
- 
+   async GetmebyID(userid: string): Promise<User | null> {
+    return this.userModel.findById(userid).exec()}
+
 
   async findAllUser(): Promise<User[]> {
     return this.userModel.find().exec();
   }
-
 }
-

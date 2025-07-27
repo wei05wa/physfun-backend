@@ -9,7 +9,4 @@ export default class {
   @MinLength(6)
   password: string;
 
-  @IsOptional()
-  @IsEmail()
-  email?: string;
 }

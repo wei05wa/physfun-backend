@@ -8,7 +8,7 @@ export class SelfGuard implements CanActivate{
 
      const request = context.switchToHttp().getRequest<Request>();
 const user = request.user;
-const paramsUsername = request.params.username;
+const paramsUsername = request.params.id;
 
 
 if(!user || !paramsUsername){

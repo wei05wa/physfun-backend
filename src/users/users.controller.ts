@@ -1,12 +1,18 @@
-import { Controller, Post, Body, Get, Param, UseGuards, Res } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, UseGuards, Res,Req } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { SelfGuard } from 'src/auth/guards/self.guard';
 import { AdminOrSelfGuard } from 'src/auth/guards/adminorself.guard';
-import { response, Response } from 'express';
+import { Response } from 'express';
 import loginUserDto from './dto/login-user.dto';
+import { UserPayload } from 'src/auth/interfaces/user-payload.interface';
+
+
+export interface AuthenticatedRequest extends Request {
+  user: UserPayload;
+}
 
 @Controller('auth')
 
@@ -36,6 +42,15 @@ export class UsersController {
   async getuserbyid(@Param('userid') userid: string) {
     return this.usersService.GetmebyID(userid);
   }
+
+    @UseGuards(AuthGuard)
+  @Get('me')
+  async getme(@Req() req: AuthenticatedRequest) {
+ const userid = req.user.sub
+//  console.log(userid)
+    return this.usersService.GetmebyID(userid);
+  }
+
 
   @Post('login')
   async LoginUser(@Body() loginUserDto : any,  @Res({ passthrough: true }) response: Response) {

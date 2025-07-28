@@ -1,10 +1,11 @@
-import { Injectable, Res } from '@nestjs/common';
+import { Injectable, Res, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from './user.schema';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { Response } from 'express';
+
+
 
 @Injectable()
 export class UsersService {
@@ -142,7 +143,14 @@ async LogoutUser(){
   }
 
    async GetmebyID(userid: string): Promise<User | null> {
-    return this.userModel.findById(userid).exec()}
+const user = this.userModel.findById(userid)
+
+ if (!user) {
+      throw new NotFoundException(`Usernot found.`);
+    }
+
+    return user
+   }
 
 
   async findAllUser(): Promise<User[]> {

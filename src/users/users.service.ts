@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Res } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from './user.schema';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { Response } from 'express';
 
 @Injectable()
 export class UsersService {
@@ -127,6 +128,14 @@ export class UsersService {
       },
     };
   }
+
+async LogoutUser(){
+
+  return {
+    success : true,
+    message : 'Logged Out Successfully.'
+  }
+}
 
   async GetmeByUsername(username: string): Promise<User | null> {
     return this.userModel.findOne({ username });

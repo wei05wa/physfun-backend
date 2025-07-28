@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEmail, MinLength } from 'class-validator';
+import { IsString , MinLength } from 'class-validator';
 
 export default class {
   

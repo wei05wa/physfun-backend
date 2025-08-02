@@ -1,191 +1,244 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import OpenAI from 'openai';
 import { ConfigService } from '@nestjs/config';
+import { HttpService } from '@nestjs/axios';
+import { AxiosError } from 'axios';
+import { catchError, firstValueFrom } from 'rxjs';
+import * as FormData from 'form-data';
+import { createWorker } from 'tesseract.js';
+// Note: pdfjs-dist doesn't work well in Node.js backend without additional setup
+// Consider using pdf-parse or pdf2pic for PDF processing instead
 
 @Injectable()
 export class ChatmodelService {
-private readonly AImodel : OpenAI;
+  private readonly logger = new Logger(ChatmodelService.name);
+  private readonly AImodel: OpenAI;
 
+  constructor(
+    private configService: ConfigService,
+  ) {
+    const API_KEY = this.configService.get<string>('DEEPSEEK_API_KEY');
 
-
-constructor(private configService : ConfigService) {
- const API_KEY = this.configService.get<string>('DEEPSEEK_API_KEY');
-
- if(!API_KEY){
-    throw new Error('Apikey not found.');
- }
-
- this.AImodel = new OpenAI({apiKey : API_KEY, baseURL:  'https://openrouter.ai/api/v1'});
-
-}
-
-
-//Phyrai Chat AI
-async Phyraimodel(prompt:string): Promise <string> {
-
-if(!prompt || typeof prompt !== 'string' || prompt.trim() === ''){
-  throw new Error("Invalid Prompt.")
-}
-
-    console.log(`The prompt you send is ${prompt}`)
-
-
-    try{
-       const response = await this.AImodel.chat.completions.create({
-    model: "deepseek/deepseek-r1-0528:free",
-    messages: [
-      {
-        "role" : "system",
-        "content" : "You are a helpful assistant that answers questions based on the provided context."
-      }
-      ,
-      {
-                    "role": "user",
-                    "content": prompt
-                }
-    ] ,
-    temperature: 0.5,
-    
-    
-  });
- 
-
-  if(!response || !response.choices[0].message.content){
-    throw new Error("No response from AI");
-  }
-const AIresponse = response.choices[0].message.content;
-
-  return  AIresponse;
-
-    }catch(error){
-throw new Error("Chat Failed:" + error.message)
+    if (!API_KEY) {
+      throw new Error('Apikey not found.');
     }
-}
 
-
-
-//Basic Chat AI
-async MessageModelbasic(prompt:string): Promise <string> {
-
-if(!prompt || typeof prompt !== 'string' || prompt.trim() === ''){
-  throw new Error("Invalid Prompt.")
-}
-
-    console.log(`The prompt you send is ${prompt}`)
-
-
-    try{
-       const response = await this.AImodel.chat.completions.create({
-    model: "deepseek/deepseek-r1-0528:free",
-    messages: [
-      {
-        "role" : "system",
-        "content" : "You are a helpful assistant that answers questions based on the provided context."
-      }
-      ,
-      {
-                    "role": "user",
-                    "content": prompt
-                }
-    ] ,
-    temperature: 0.5,
-    
-  });
- 
-
-  if(!response || !response.choices[0].message.content){
-    throw new Error("No response from AI");
+    this.AImodel = new OpenAI({
+      apiKey: API_KEY,
+      baseURL: 'https://openrouter.ai/api/v1',
+    });
   }
-const AIresponse = response.choices[0].message.content;
 
-  return  AIresponse;
-
-    }catch(error){
-throw new Error("Chat Failed:" + error.message)
+  // Phyrai Chat AI
+  async Phyraimodel(prompt: string): Promise<string> {
+    if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
+      throw new Error('Invalid Prompt.');
     }
-}
 
-//Intermediate ChatAI
-async MessageModelIntermediate(prompt:string): Promise <string> {
+    console.log(`The prompt you send is ${prompt}`);
 
-if(!prompt || typeof prompt !== 'string' || prompt.trim() === ''){
-  throw new Error("Invalid Prompt.")
-}
+    try {
+      const response = await this.AImodel.chat.completions.create({
+        model: 'deepseek/deepseek-r1-0528:free',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are a helpful physics assistant that provides clear, accurate explanations about physics concepts and helps analyze scientific content.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.5,
+      });
 
-    console.log(`The prompt you send is ${prompt}`)
-
-
-    try{
-       const response = await this.AImodel.chat.completions.create({
-    model: "deepseek/deepseek-r1-0528:free",
-    messages: [
-      {
-        "role" : "system",
-        "content" : "You are a helpful assistant that answers questions based on the provided context. with the person intermediate"
+      if (!response || !response.choices[0].message.content) {
+        throw new Error('No response from AI');
       }
-      ,
-      {
-                    "role": "user",
-                    "content": prompt
-                }
-    ] ,
-    temperature: 0.5,
-    
-  });
- 
+      const AIresponse = response.choices[0].message.content;
 
-  if(!response || !response.choices[0].message.content){
-    throw new Error("No response from AI");
-  }
-const AIresponse = response.choices[0].message.content;
-
-  return  AIresponse;
-
-    }catch(error){
-throw new Error("Chat Failed:" + error.message)
+      return AIresponse;
+    } catch (error) {
+      throw new Error('Chat Failed:' + error.message);
     }
-}
+  }
 
+  // Fixed OCR Processing Method
+  async OCR_ProcessReport(
+    fileBuffer: Buffer,
+    filename: string,
+  ): Promise<string> {
+    this.logger.log(`Processing file '${filename}' with OCR.`);
 
-//Professional ChatAI
-async MessageModelProfessional(prompt:string): Promise <string> {
+    if (!fileBuffer) {
+      throw new Error('File buffer is required for OCR processing.');
+    }
 
-if(!prompt || typeof prompt !== 'string' || prompt.trim() === ''){
-  throw new Error("Invalid Prompt.")
-}
-
-    console.log(`The prompt you send is ${prompt}`)
-
-
-    try{
-       const response = await this.AImodel.chat.completions.create({
-    model: "deepseek/deepseek-r1-0528:free",
-    messages: [
-      {
-        "role" : "system",
-        "content" : "You are a helpful assistant that answers questions based on the provided context. with the person intermediate"
+    try {
+      const fileExtension = filename.toLowerCase().split('.').pop();
+      
+      if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp'].includes(fileExtension || '')) {
+        return await this.processImage(fileBuffer, filename);
+      } else if (fileExtension === 'pdf') {
+        // For now, throw an error for PDFs since pdfjs-dist is complex in Node.js
+        throw new Error('PDF processing is not supported in this backend implementation. Please convert PDF to image first.');
+      } else {
+        throw new Error(`Unsupported file type: ${fileExtension}`);
       }
-      ,
-      {
-                    "role": "user",
-                    "content": prompt
-                }
-    ] ,
-    temperature: 0.5,
-    
-  });
- 
-
-  if(!response || !response.choices[0].message.content){
-    throw new Error("No response from AI");
-  }
-const AIresponse = response.choices[0].message.content;
-
-  return  AIresponse;
-
-    }catch(error){
-throw new Error("Chat Failed:" + error.message)
+    } catch (error) {
+      this.logger.error('OCR Processing failed:', error);
+      throw new InternalServerErrorException(`OCR Processing Failed: ${error.message}`);
     }
-}
+  }
 
+  // Fixed image processing method - Compatible with all Tesseract.js versions
+  private async processImage(fileBuffer: Buffer, filename: string): Promise<string> {
+    this.logger.log(`Processing image '${filename}' with Tesseract OCR.`);
+    
+    let worker;
+    try {
+      // Simple worker creation - no logger parameter
+      worker = await createWorker('eng+tha');
+ 
+      // Configure for better accuracy
+      await worker.setParameters({
+        tessedit_pageseg_mode: '1', // Automatic page segmentation with OSD
+        tessedit_ocr_engine_mode: '2', // LSTM OCR Engine modes
+      });
+
+      // Process the image
+      this.logger.log('Starting OCR recognition...');
+      const { data: { text } } = await worker.recognize(fileBuffer);
+
+      await worker.terminate();
+      this.logger.log('Image OCR completed successfully.');
+      return text.trim();
+    } catch (error) {
+      if (worker) {
+        await worker.terminate();
+      }
+      this.logger.error('Image processing failed:', error);
+      throw error;
+    }
+
+
+
+
+  }
+
+  
+
+  // Basic Chat AI
+  async MessageModelbasic(prompt: string): Promise<string> {
+    if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
+      throw new Error('Invalid Prompt.');
+    }
+
+    console.log(`The prompt you send is ${prompt}`);
+
+    try {
+      const response = await this.AImodel.chat.completions.create({
+        model: 'deepseek/deepseek-r1-0528:free',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are a helpful assistant that provides simple, clear answers suitable for beginners.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.3,
+      });
+
+      if (!response || !response.choices[0].message.content) {
+        throw new Error('No response from AI');
+      }
+      const AIresponse = response.choices[0].message.content;
+
+      return AIresponse;
+    } catch (error) {
+      throw new Error('Chat Failed:' + error.message);
+    }
+  }
+
+  // Intermediate ChatAI
+  async MessageModelIntermediate(prompt: string): Promise<string> {
+    if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
+      throw new Error('Invalid Prompt.');
+    }
+
+    console.log(`The prompt you send is ${prompt}`);
+
+    try {
+      const response = await this.AImodel.chat.completions.create({
+        model: 'deepseek/deepseek-r1-0528:free',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are a helpful assistant that provides detailed explanations with examples, suitable for intermediate learners.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.4,
+      });
+
+      if (!response || !response.choices[0].message.content) {
+        throw new Error('No response from AI');
+      }
+      const AIresponse = response.choices[0].message.content;
+
+      return AIresponse;
+    } catch (error) {
+      throw new Error('Chat Failed:' + error.message);
+    }
+  }
+
+  // Professional ChatAI
+  async MessageModelProfessional(prompt: string): Promise<string> {
+    if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
+      throw new Error('Invalid Prompt.');
+    }
+
+    console.log(`The prompt you send is ${prompt}`);
+
+    try {
+      const response = await this.AImodel.chat.completions.create({
+        model: 'deepseek/deepseek-r1-0528:free',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are an expert assistant that provides comprehensive, technical explanations with advanced concepts and mathematical details, suitable for professionals and advanced students.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.5,
+      });
+
+      if (!response || !response.choices[0].message.content) {
+        throw new Error('No response from AI');
+      }
+      const AIresponse = response.choices[0].message.content;
+
+      return AIresponse;
+    } catch (error) {
+      throw new Error('Chat Failed:' + error.message);
+    }
+  }
 }

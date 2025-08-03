@@ -92,14 +92,15 @@ export class ChatmodelController {
       throw new BadRequestException('No file uploaded.');
     }
 
+    
     // Call the new service method
     const result = await this.ChatModelService.OCR_ProcessReport(
       file.buffer,
       file.originalname,
     );
 
- const report = await this.ChatModelService.Phyraimodel(
-  result
+ const report = await this.ChatModelService.Physics_SmartCheck(
+   result
  )
 
 return {

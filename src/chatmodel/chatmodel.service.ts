@@ -8,8 +8,8 @@ import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { AxiosError } from 'axios';
 import { catchError, firstValueFrom } from 'rxjs';
-import * as FormData from 'form-data';
 import { createWorker } from 'tesseract.js';
+import * as pdfparse from 'pdf-parse'
 // Note: pdfjs-dist doesn't work well in Node.js backend without additional setup
 // Consider using pdf-parse or pdf2pic for PDF processing instead
 
@@ -69,6 +69,44 @@ export class ChatmodelService {
     }
   }
 
+//physics smartcheck
+async Physics_SmartCheck(prompt: string): Promise<string> {
+    if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
+      throw new Error('Invalid Prompt.');
+    }
+
+    console.log(`The prompt you send is ${prompt}`);
+
+    try {
+      const response = await this.AImodel.chat.completions.create({
+        model: 'deepseek/deepseek-r1-0528:free',
+        messages: [
+          {
+            role: 'system',
+            content:
+              ""
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.5,
+      });
+
+      if (!response || !response.choices[0].message.content) {
+        throw new Error('No response from AI');
+      }
+      const AIresponse = response.choices[0].message.content;
+
+      return AIresponse;
+    } catch (error) {
+      throw new Error('Chat Failed:' + error.message);
+    }
+  }
+
+
+
   // Fixed OCR Processing Method
   async OCR_ProcessReport(
     fileBuffer: Buffer,
@@ -86,8 +124,7 @@ export class ChatmodelService {
       if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp'].includes(fileExtension || '')) {
         return await this.processImage(fileBuffer, filename);
       } else if (fileExtension === 'pdf') {
-        // For now, throw an error for PDFs since pdfjs-dist is complex in Node.js
-        throw new Error('PDF processing is not supported in this backend implementation. Please convert PDF to image first.');
+         return await this.processPdf(fileBuffer, filename);
       } else {
         throw new Error(`Unsupported file type: ${fileExtension}`);
       }
@@ -95,7 +132,31 @@ export class ChatmodelService {
       this.logger.error('OCR Processing failed:', error);
       throw new InternalServerErrorException(`OCR Processing Failed: ${error.message}`);
     }
+
+    
   }
+
+    private async processPdf(fileBuffer: Buffer, filename: string): Promise<string> {
+    this.logger.log(`Parsing text from PDF '${filename}' using pdf-parse.`);
+    
+    try {
+      // 1. Call pdf-parse on the buffer.
+      const data = await pdfparse(fileBuffer);
+      
+      // 2. The entire text content is in `data.text`. No looping is needed.
+      this.logger.log(`Successfully extracted ${data.numpages} pages of text from PDF.`);
+      return data.text;
+
+    } catch (error) {
+      this.logger.error(`Failed to parse PDF file '${filename}':`, error);
+      throw new Error('The provided PDF file could not be read or is corrupted.');
+    }
+
+    
+  }
+
+
+
 
   // Fixed image processing method - Compatible with all Tesseract.js versions
   private async processImage(fileBuffer: Buffer, filename: string): Promise<string> {

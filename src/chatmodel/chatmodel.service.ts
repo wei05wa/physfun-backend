@@ -81,11 +81,10 @@ async Physics_SmartCheck(prompt: string): Promise<string> {
       const response = await this.AImodel.chat.completions.create({
         model: 'deepseek/deepseek-r1-0528:free',
         messages: [
-          {
-            role: 'system',
-            content:
-              ""
-          },
+         {
+  role: "system",
+content: "คุณเป็น AI ผู้เชี่ยวชาญด้านการสอนฟิสิกส์ โปรดวิเคราะห์การแก้โจทย์ของนักเรียนตามโจทย์ที่กำหนดและภาพคำตอบที่อัปโหลดมา\n\n**โจทย์:** [ใส่โจทย์ตรงนี้]\n\n**คำตอบของนักเรียน:** [อธิบายสิ่งที่เห็นในภาพ หรือให้ AI อ่านจากรูป]\n\nโปรดวิเคราะห์ตามเกณฑ์ 3 ขั้นตอนหลัก และให้ผลลัพธ์ในรูปแบบ JSON:\n\n### ขั้นตอนที่ 1: การวาดแผนภาพและทำความเข้าใจสถานการณ์\n- วาดรูปถูกต้องตามโจทย์\n- ระบุทิศทาง แรง และตำแหน่งสำคัญ\n- แสดงความเข้าใจสถานการณ์ฟิสิกส์\n\n### ขั้นตอนที่ 2: การกำหนดตัวแปรและค่าคงที่\n- ระบุตัวแปรที่ต้องหาและที่ทราบค่า\n- กำหนดหน่วยที่ถูกต้อง\n- ระบุค่าคงที่ที่จำเป็น\n\n### ขั้นตอนที่ 3: การตั้งสมการและคำนวณ\n- เลือกใช้สมการที่เหมาะสม\n- แทนค่าถูกต้อง\n- คำนวณและได้คำตอบที่ถูกต้อง\n\n## รูปแบบผลลัพธ์ที่ต้องการ (JSON):\n\n```json\n{\n  \"overall_score\": \"0-100\",\n  \"analysis\": {\n    \"diagram\": {\n      \"score\": \"0-100\",\n      \"status\": \"correct|partial|incorrect|missing\",\n      \"strengths\": [\"จุดแข็งที่ 1\", \"จุดแข็งที่ 2\"],\n      \"issues\": [\n        {\n          \"type\": \"major|minor\",\n          \"description\": \"รายละเอียดปัญหา\",\n          \"suggestion\": \"ข้อเสนอแนะการแก้ไข\"\n        }\n      ]\n    },\n    \"variables\": {\n      \"score\": \"0-100\",\n      \"status\": \"correct|partial|incorrect|missing\",\n      \"strengths\": [\"จุดแข็งที่ 1\", \"จุดแข็งที่ 2\"],\n      \"issues\": [\n        {\n          \"type\": \"major|minor\",\n          \"description\": \"รายละเอียดปัญหา\",\n          \"suggestion\": \"ข้อเสนอแนะการแก้ไข\"\n        }\n      ]\n    },\n    \"equations\": {\n      \"score\": \"0-100\",\n      \"status\": \"correct|partial|incorrect|missing\",\n      \"strengths\": [\"จุดแข็งที่ 1\", \"จุดแข็งที่ 2\"],\n      \"issues\": [\n        {\n          \"type\": \"major|minor\",\n          \"description\": \"รายละเอียดปัญหา\",\n          \"suggestion\": \"ข้อเสนอแนะการแก้ไข\"\n        }\n      ]\n    }\n  },\n  \"recommendations\": {\n    \"immediate\": [\"สิ่งที่ควรแก้ไขทันที\"],\n    \"study_focus\": [\"หัวข้อที่ควรทบทวน\"],\n    \"practice_areas\": [\"พื้นที่ที่ควรฝึกฝน\"]\n  },\n  \"correct_solution\": {\n    \"brief_outline\": \"โครงร่างคำตอบที่ถูกต้อง\",\n    \"key_formulas\": [\"สูตรสำคัญที่ควรใช้\"],\n    \"final_answer\": \"คำตอบที่ถูกต้อง\"\n  }\n}\n```"
+},
           {
             role: 'user',
             content: prompt,

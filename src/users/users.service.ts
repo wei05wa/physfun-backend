@@ -156,4 +156,6 @@ const user = this.userModel.findById(userid)
   async findAllUser(): Promise<User[]> {
     return this.userModel.find().exec();
   }
+
+  
 }

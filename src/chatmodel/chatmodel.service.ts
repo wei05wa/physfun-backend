@@ -5,26 +5,31 @@ import {
 } from '@nestjs/common';
 import OpenAI from 'openai';
 import { ConfigService } from '@nestjs/config';
-import { HttpService } from '@nestjs/axios';
-import { AxiosError } from 'axios';
-import { catchError, firstValueFrom } from 'rxjs';
-import { createWorker } from 'tesseract.js';
+import axios from 'axios';
 import * as pdfparse from 'pdf-parse'
-// Note: pdfjs-dist doesn't work well in Node.js backend without additional setup
-// Consider using pdf-parse or pdf2pic for PDF processing instead
+import * as FormData from 'form-data'
 
 @Injectable()
 export class ChatmodelService {
   private readonly logger = new Logger(ChatmodelService.name);
   private readonly AImodel: OpenAI;
+    private readonly aiForThaiApiKey: string;
+  private readonly aiForThaiUrl = 'https://api.aiforthai.in.th/ocr';
+
 
   constructor(
     private configService: ConfigService,
   ) {
     const API_KEY = this.configService.get<string>('DEEPSEEK_API_KEY');
+    this.aiForThaiApiKey = this.configService.get<string>('AI_FOR_THAI_API_KEY') ?? '';
+
 
     if (!API_KEY) {
-      throw new Error('Apikey not found.');
+      throw new Error('Apikey Deepseek not found.');
+    }
+
+    if (!this.aiForThaiApiKey){
+  throw new Error('Apikey OCR not found.');
     }
 
     this.AImodel = new OpenAI({
@@ -70,12 +75,21 @@ export class ChatmodelService {
   }
 
 //physics smartcheck
-async Physics_SmartCheck(prompt: string): Promise<string> {
-    if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
+async Physics_SmartCheck(result: string, problem : string): Promise<string> {
+
+    if (!result || typeof result !== 'string' || result.trim() === ''){
       throw new Error('Invalid Prompt.');
     }
 
-    console.log(`The prompt you send is ${prompt}`);
+  this.logger.log(`Received prompt: ${problem}`); 
+ 
+    if( !problem || typeof problem !== 'string' || problem.trim() === ""){
+      throw new Error('Invalid Problem.');
+    }
+    
+
+
+    console.log(`The prompt you send is ${result} and ${problem}`);
 
     try {
       const response = await this.AImodel.chat.completions.create({
@@ -87,7 +101,7 @@ content: "คุณเป็น AI ผู้เชี่ยวชาญด้า
 },
           {
             role: 'user',
-            content: prompt,
+            content: `โจทย์: ${problem}\n\nคำตอบของนักเรียน: ${result}`,
           },
         ],
         temperature: 0.5,
@@ -159,34 +173,29 @@ content: "คุณเป็น AI ผู้เชี่ยวชาญด้า
 
   // Fixed image processing method - Compatible with all Tesseract.js versions
   private async processImage(fileBuffer: Buffer, filename: string): Promise<string> {
-    this.logger.log(`Processing image '${filename}' with Tesseract OCR.`);
+    this.logger.log(`Processing image '${filename}' with AIFORTHAI OCR.`);
     
-    let worker;
+   
     try {
-      // Simple worker creation - no logger parameter
-      worker = await createWorker('eng+tha');
- 
-      // Configure for better accuracy
-      await worker.setParameters({
-        tessedit_pageseg_mode: '1', // Automatic page segmentation with OSD
-        tessedit_ocr_engine_mode: '2', // LSTM OCR Engine modes
+          const formData = new FormData();
+      formData.append('uploadfile', fileBuffer as any, filename );
+  const response = await axios.post(this.aiForThaiUrl, formData, {
+        headers: {
+          ...formData.getHeaders(),
+          Apikey: this.aiForThaiApiKey,
+        },
+        maxContentLength: 10 * 1024 * 1024, // <= 10MB
       });
 
-      // Process the image
-      this.logger.log('Starting OCR recognition...');
-      const { data: { text } } = await worker.recognize(fileBuffer);
+      const { Original, Spellcorrection } = response.data;
 
-      await worker.terminate();
       this.logger.log('Image OCR completed successfully.');
-      return text.trim();
-    } catch (error) {
-      if (worker) {
-        await worker.terminate();
-      }
-      this.logger.error('Image processing failed:', error);
-      throw error;
-    }
+      return Spellcorrection?.trim() || Original?.trim() || '';
 
+    } catch (error) {
+   this.logger.error('Image processing failed:', error.response?.data || error.message);
+      throw new InternalServerErrorException('OCR API request failed.');
+    }
 
 
 

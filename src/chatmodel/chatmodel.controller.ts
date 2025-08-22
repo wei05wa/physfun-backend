@@ -73,7 +73,7 @@ export class ChatmodelController {
 //     }
 //   }
 
-//OCR + AI Tesseract
+//OCR + AI for Thai
    @Post('process-with-ai') // Full route is POST /ocr/process-with-ai
   @UseInterceptors(FileInterceptor('file'))
   async uploadAndProcessWithAi(
@@ -86,6 +86,7 @@ export class ChatmodelController {
       }),
     )
     file: Express.Multer.File,
+     @Body('prompt') prompt: string, 
   ) {
     this.logger.log(`Received file for OCR + AI processing: ${file.originalname}`);
     if (!file) {
@@ -100,8 +101,17 @@ export class ChatmodelController {
     );
 
  const report = await this.ChatModelService.Physics_SmartCheck(
-   result
+   result,
+   prompt
  )
+
+//  const match = report.match(/```json([\s\S]*?)```/);
+//   let parsed;
+//   if (match) {
+//     parsed = JSON.parse(match[1]); // safely parse the inside JSON
+//   } else {
+//     throw new Error("AI did not return valid JSON");
+//   }
 
 return {
   success : true,
